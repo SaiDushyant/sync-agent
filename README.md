@@ -23,11 +23,17 @@ Its purpose is to extract data from Tally, parse the XML, track changes using ha
 - `logs/`: Log files
 - `data/`: Local database storage
 
-## Development Setup
+## Installation
 1. Clone the repository
 2. Run `npm install`
-3. Copy `.env.example` to `.env` and fill in the values
-4. Run `npm start`
+
+## Environment Setup
+1. Copy `.env.example` to `.env`
+2. Fill in the required values in `.env`
+
+## Running
+- To run normally: `npm start`
+- To run in development mode (with auto-restart): `npm run dev`
 
 ## Planned Project Phases
 - Phase 0: Project foundation and architecture (Current)
