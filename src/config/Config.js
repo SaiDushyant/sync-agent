@@ -35,6 +35,11 @@ function loadConfig() {
     throw new Error('Configuration Error: REQUEST_TIMEOUT must be a positive integer.');
   }
 
+  const API_REQUEST_TIMEOUT = parseInt(trim(env.API_REQUEST_TIMEOUT), 10);
+  if (isNaN(API_REQUEST_TIMEOUT) || API_REQUEST_TIMEOUT <= 0) {
+    throw new Error('Configuration Error: API_REQUEST_TIMEOUT must be a positive integer.');
+  }
+
   return Object.freeze({
     TALLY_HOST,
     TALLY_PORT,
@@ -43,7 +48,8 @@ function loadConfig() {
     SYNC_INTERVAL,
     LOG_LEVEL,
     DATABASE_PATH,
-    requestTimeout: REQUEST_TIMEOUT
+    requestTimeout: REQUEST_TIMEOUT,
+    apiRequestTimeout: API_REQUEST_TIMEOUT
   });
 }
 

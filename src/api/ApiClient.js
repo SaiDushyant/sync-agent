@@ -1,2 +1,162 @@
-// API module stub
-module.exports = {};
+const http = require('http');
+const https = require('https');
+const { URL } = require('url');
+
+const MAX_RETRIES = 3;
+
+const RETRY_DELAYS_MS = Object.freeze([
+    1000,
+    2000,
+    4000
+]);
+
+class ApiClient {
+  /**
+   * @param {Object} config
+   * @param {string} config.apiUrl - The base URL of the API.
+   * @param {string} config.apiKey - The API key for authentication.
+   */
+  constructor(config) {
+    if (!config || !config.apiUrl || !config.apiKey) {
+      throw new Error('ApiClient requires a config with apiUrl and apiKey');
+    }
+    this.apiUrl = config.apiUrl;
+    this.apiKey = config.apiKey;
+    this.timeout = config.apiRequestTimeout;
+  }
+
+  /**
+   * Uploads changed entities to the backend API.
+   * @param {string} entityType - The type of entities being uploaded.
+   * @param {Array} entities - The entities to upload.
+   * @returns {Promise<Object>} The JSON response from the API.
+   */
+  async uploadEntities(entityType, entities) {
+    let attempt = 0;
+
+    while (attempt <= MAX_RETRIES) {
+      try {
+        const response = await this._makeRequest(entityType, entities);
+        return response;
+      } catch (error) {
+        if (this._shouldRetry(error) && attempt < MAX_RETRIES) {
+          const delay = RETRY_DELAYS_MS[attempt];
+          await this._sleep(delay);
+          attempt++;
+        } else {
+          throw error; // Throw if max retries exceeded or error is not retryable
+        }
+      }
+    }
+  }
+
+  _makeRequest(entityType, entities) {
+    return new Promise((resolve, reject) => {
+      let parsedUrl;
+      try {
+        parsedUrl = new URL(this.apiUrl);
+      } catch (e) {
+        return reject(new Error(`Invalid API URL: ${this.apiUrl}`));
+      }
+
+      const client = parsedUrl.protocol === 'https:' ? https : http;
+      const payload = JSON.stringify({ entityType, entities });
+
+      const options = {
+        hostname: parsedUrl.hostname,
+        port: parsedUrl.port,
+        path: parsedUrl.pathname + parsedUrl.search,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': this.apiKey,
+          'Content-Length': Buffer.byteLength(payload)
+        },
+        timeout: this.timeout
+      };
+
+      const req = client.request(options, (res) => {
+        let data = '';
+
+        res.on('data', (chunk) => {
+          data += chunk;
+        });
+
+        res.on('end', () => {
+          const status = res.statusCode;
+
+          if (status >= 500 && status <= 599) {
+            const err = new Error(`HTTP Error: ${status} Internal Server Error`);
+            err.status = status;
+            err.type = 'SERVER_ERROR';
+            return reject(err);
+          }
+          
+          if (status === 401 || status === 403) {
+            const err = new Error(`Authentication failure: HTTP ${status}`);
+            err.status = status;
+            err.type = 'AUTH_ERROR';
+            return reject(err);
+          }
+
+          if (status === 400 || status === 404) {
+            const err = new Error(`HTTP Error: ${status} Client Error`);
+            err.status = status;
+            err.type = 'CLIENT_ERROR';
+            return reject(err);
+          }
+
+          if (status < 200 || status >= 300) {
+            const err = new Error(`Invalid HTTP status: ${status}`);
+            err.status = status;
+            err.type = 'INVALID_STATUS';
+            return reject(err);
+          }
+
+          try {
+            const parsedData = JSON.parse(data);
+            if (typeof parsedData !== 'object' || parsedData === null || Array.isArray(parsedData)) {
+              const err = new Error('Invalid JSON response: expected an object');
+              err.type = 'INVALID_JSON';
+              return reject(err);
+            }
+            resolve(parsedData);
+          } catch (e) {
+            const err = new Error('Invalid JSON response');
+            err.type = 'INVALID_JSON';
+            reject(err);
+          }
+        });
+      });
+
+      req.on('error', (e) => {
+        const err = new Error(`Connection failure: ${e.message}`);
+        err.type = 'NETWORK_ERROR';
+        reject(err);
+      });
+
+      req.on('timeout', () => {
+        req.destroy();
+        const err = new Error('Request timeout');
+        err.type = 'TIMEOUT';
+        reject(err);
+      });
+
+      req.write(payload);
+      req.end();
+    });
+  }
+
+  _shouldRetry(error) {
+    if (error.type === 'NETWORK_ERROR' || error.type === 'TIMEOUT' || error.type === 'SERVER_ERROR') {
+      return true;
+    }
+    return false;
+  }
+
+  _sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+}
+
+module.exports = ApiClient;
