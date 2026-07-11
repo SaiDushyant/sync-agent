@@ -2,25 +2,52 @@ const TallyRequests = require('../tally/TallyRequests');
 const SyncError = require('../errors/SyncError');
 
 const ENTITY_CONFIGS = Object.freeze({
-    LEDGER: {
-        buildRequest: () => TallyRequests.buildLedgerRequest(),
-        parseXml: (parser, xml) => parser.parseLedgers(xml)
-    },
     STOCK_GROUP: {
         buildRequest: () => TallyRequests.buildStockGroupRequest(),
-        parseXml: (parser, xml) => parser.parseStockGroups(xml)
+        parseXml: (parser, xml) => parser.parseStockGroups(xml),
+        mapPayload: (entity) => ({
+            tallyMasterId: entity.id || null,
+            tallyGuid: entity.guid || null,
+            tallyAlterId: entity.alterId || null,
+            name: entity.name || null,
+            parentName: entity.parent || null,
+            isActive: true
+        })
     },
     UNIT: {
         buildRequest: () => TallyRequests.buildUnitRequest(),
-        parseXml: (parser, xml) => parser.parseUnits(xml)
+        parseXml: (parser, xml) => parser.parseUnits(xml),
+        mapPayload: (entity) => ({
+            tallyMasterId: entity.id || null,
+            tallyGuid: entity.guid || null,
+            tallyAlterId: entity.alterId || null,
+            name: entity.name || null,
+            symbol: entity.name || null,
+            isActive: true
+        })
     },
     STOCK_ITEM: {
         buildRequest: () => TallyRequests.buildStockItemRequest(),
-        parseXml: (parser, xml) => parser.parseStockItems(xml)
+        parseXml: (parser, xml) => parser.parseStockItems(xml),
+        mapPayload: (entity) => ({
+            tallyMasterId: entity.id || null,
+            tallyGuid: entity.guid || null,
+            tallyAlterId: entity.alterId || null,
+            sku: entity.id || null,
+            name: entity.name || null,
+            brand: null,
+            category: entity.parent || null,
+            costPrice: 0,
+            stockQty: 0,
+            tallyStockQty: 0,
+            stockGroupId: entity.parent || null,
+            unitId: null,
+            isActive: true
+        })
     }
 });
 
-const ENTITY_ORDER = ['LEDGER', 'STOCK_GROUP', 'UNIT', 'STOCK_ITEM'];
+const ENTITY_ORDER = ['STOCK_GROUP', 'UNIT', 'STOCK_ITEM'];
 
 class SyncEngine {
     constructor({ tallyClient, parser, hashEngine, apiClient, database }) {
@@ -58,6 +85,8 @@ class SyncEngine {
             };
 
             try {
+                let displayType = entityType === 'STOCK_ITEM' ? 'Products' : (entityType === 'STOCK_GROUP' ? 'Stock Groups' : 'Units');
+                console.log(`Start syncing ${displayType}`);
                 // 1. Build XML request
                 const xmlRequest = config.buildRequest();
                 
@@ -79,7 +108,7 @@ class SyncEngine {
                 
                 // 6. Upload only if there are changes
                 if (entitiesToUpload.length > 0) {
-                    const uploadPayload = entitiesToUpload.map(e => e.entity);
+                    const uploadPayload = entitiesToUpload.map(e => config.mapPayload(e.entity));
                     const apiResponse = await this.apiClient.uploadEntities(entityType, uploadPayload);
                     
                     if (!apiResponse || apiResponse.success !== true) {
@@ -104,12 +133,17 @@ class SyncEngine {
                 // 8. Record successful summary
                 stats.success = true;
                 entityResults[entityType] = stats;
+                console.log(`Finished ${displayType}`);
+                console.log(`Uploaded ${stats.uploaded}`);
+                console.log(`Skipped ${stats.unchanged}`);
             } catch (error) {
                 // 9. Record failure and continue with other entities
                 overallSuccess = false;
                 stats.success = false;
                 stats.error = error.message;
                 entityResults[entityType] = stats;
+                let displayType = entityType === 'STOCK_ITEM' ? 'Products' : (entityType === 'STOCK_GROUP' ? 'Stock Groups' : 'Units');
+                console.log(`Failed ${displayType}: ${error.message}`);
             }
         }
 
@@ -120,8 +154,14 @@ class SyncEngine {
         return {
             startedAt,
             completedAt,
-            durationMs,
-            entityResults,
+            duration: durationMs,
+            groups: entityResults.STOCK_GROUP ? entityResults.STOCK_GROUP.total : 0,
+            units: entityResults.UNIT ? entityResults.UNIT.total : 0,
+            products: entityResults.STOCK_ITEM ? entityResults.STOCK_ITEM.total : 0,
+            uploaded: Object.values(entityResults).reduce((sum, r) => sum + r.uploaded, 0),
+            changed: Object.values(entityResults).reduce((sum, r) => sum + r.changed, 0),
+            unchanged: Object.values(entityResults).reduce((sum, r) => sum + r.unchanged, 0),
+            failed: Object.values(entityResults).filter(r => !r.success).length,
             success: overallSuccess
         };
     }

@@ -61,12 +61,23 @@ class ApiClient {
       }
 
       const client = parsedUrl.protocol === 'https:' ? https : http;
-      const payload = JSON.stringify({ entityType, entities });
+      const payload = JSON.stringify(entities);
+
+      let endpointPath = parsedUrl.pathname;
+      if (endpointPath.endsWith('/')) endpointPath = endpointPath.slice(0, -1);
+      
+      if (entityType === 'STOCK_GROUP') {
+        endpointPath += '/api/sync/stock-groups';
+      } else if (entityType === 'UNIT') {
+        endpointPath += '/api/sync/units';
+      } else if (entityType === 'STOCK_ITEM') {
+        endpointPath += '/api/sync/products';
+      }
 
       const options = {
         hostname: parsedUrl.hostname,
         port: parsedUrl.port,
-        path: parsedUrl.pathname + parsedUrl.search,
+        path: endpointPath + parsedUrl.search,
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
