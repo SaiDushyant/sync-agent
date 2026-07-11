@@ -1,9 +1,10 @@
 class Scheduler {
-    constructor(syncEngine, config) {
-        if (!syncEngine || !config) {
-            throw new Error('Scheduler requires syncEngine and config');
+    constructor(syncEngine, config, logger) {
+        if (!syncEngine || !config || !logger) {
+            throw new Error('Scheduler requires syncEngine, config, and logger');
         }
         this.syncEngine = syncEngine;
+        this.logger = logger;
         this.syncIntervalMs = config.syncInterval * 1000;
         
         this.timer = null;
@@ -54,7 +55,7 @@ class Scheduler {
             await this.currentRunPromise;
         } catch (error) {
             // One failed sync must not stop future syncs
-            console.error('Scheduled sync failed unexpectedly:', error.message);
+            this.logger.error('Scheduled sync failed unexpectedly:', { error: error.message });
         } finally {
             this.isRunning = false;
             this.currentRunPromise = null;

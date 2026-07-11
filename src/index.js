@@ -6,13 +6,16 @@ const ApiClient = require('./api/ApiClient');
 const database = require('./database/Database');
 const SyncEngine = require('./sync/SyncEngine');
 const Scheduler = require('./scheduler/Scheduler');
+const Logger = require('./logger/Logger');
 
 let config;
 let scheduler;
+let logger;
 
 try {
   config = loadConfig();
-  console.log('Tally Sync Agent starting...');
+  logger = new Logger(config);
+  logger.info('Tally Sync Agent starting...');
   
   // Initialize dependencies
   database.initialize();
@@ -28,27 +31,34 @@ try {
       database
   });
 
-  scheduler = new Scheduler(syncEngine, config);
+  scheduler = new Scheduler(syncEngine, config, logger);
   scheduler.start();
 
-  console.log('Configuration loaded successfully.');
-  console.log('Scheduler started.');
+  logger.info('Configuration loaded successfully.');
+  logger.info('Scheduler started.');
 } catch (error) {
-  console.error(error.message);
+  if (logger) {
+      logger.error(error.message);
+  } else {
+      console.error(error.message);
+  }
   process.exit(1);
 }
 
 async function handleShutdown(signal) {
-  console.log(`\nReceived ${signal}. Shutting down cleanly...`);
+  if (logger) logger.info(`Received ${signal}. Shutting down cleanly...`);
   if (scheduler) {
       await scheduler.stop();
   }
   database.close();
-  console.log('Shutdown complete.');
+  if (logger) {
+      logger.info('Shutdown complete.');
+      logger.close();
+  }
   process.exit(0);
 }
 
 process.on('SIGINT', handleShutdown);
 process.on('SIGTERM', handleShutdown);
 
-console.log('Tally Sync Agent is running. Press Ctrl+C to stop.');
+if (logger) logger.info('Tally Sync Agent is running. Press Ctrl+C to stop.');

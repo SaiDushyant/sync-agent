@@ -46,7 +46,7 @@ function loadConfig() {
     API_URL,
     API_KEY,
     syncInterval: SYNC_INTERVAL,
-    LOG_LEVEL,
+    logLevel: LOG_LEVEL,
     DATABASE_PATH,
     requestTimeout: REQUEST_TIMEOUT,
     apiRequestTimeout: API_REQUEST_TIMEOUT
