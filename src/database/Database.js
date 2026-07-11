@@ -1,6 +1,7 @@
 const DatabaseLib = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
+const DatabaseError = require('../errors/DatabaseError');
 
 class Database {
     constructor() {
@@ -19,7 +20,7 @@ class Database {
 
         const dbPath = process.env.DATABASE_PATH;
         if (!dbPath) {
-            throw new Error('DATABASE_PATH is not set in environment.');
+            throw new DatabaseError('DATABASE_PATH is not set in environment.');
         }
         
         // Ensure the directory exists
@@ -152,7 +153,7 @@ class Database {
      */
     _checkInitialized() {
         if (!this.db) {
-            throw new Error('Database not initialized. Call initialize() first.');
+            throw new DatabaseError('Database not initialized. Call initialize() first.');
         }
     }
 }

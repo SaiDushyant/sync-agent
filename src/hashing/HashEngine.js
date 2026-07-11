@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const HashEngineError = require('../errors/HashEngineError');
 
 const HASH_STATUS = Object.freeze({
     NEW: "NEW",
@@ -16,7 +17,7 @@ const ALLOWED_ENTITY_TYPES = Object.freeze(new Set([
 class HashEngine {
     constructor(database) {
         if (!database) {
-            throw new Error('Database dependency is required');
+            throw new HashEngineError('Database dependency is required');
         }
         this.database = database;
     }
@@ -74,24 +75,24 @@ class HashEngine {
      */
     evaluateEntity(entityType, entity) {
         if (!entityType) {
-            throw new Error('entityType is missing');
+            throw new HashEngineError('entityType is missing');
         }
         if (!ALLOWED_ENTITY_TYPES.has(entityType)) {
-            throw new Error(`Unsupported entity type: ${entityType}`);
+            throw new HashEngineError(`Unsupported entity type: ${entityType}`);
         }
         if (!entity || !entity.id) {
-            throw new Error('entity.id is missing');
+            throw new HashEngineError('entity.id is missing');
         }
 
         let previousRecord;
         try {
             previousRecord = this.database.getHash(entityType, String(entity.id));
         } catch (error) {
-            throw new Error(`Database access failed: ${error.message}`);
+            throw new HashEngineError(`Database access failed: ${error.message}`, { cause: error });
         }
 
         if (previousRecord && typeof previousRecord.hash !== 'string') {
-            throw new Error(`Invalid database record: missing valid hash property for ${entityType} ${entity.id}`);
+            throw new HashEngineError(`Invalid database record: missing valid hash property for ${entityType} ${entity.id}`);
         }
 
         const hash = this._generateHash(entity);
@@ -125,10 +126,10 @@ class HashEngine {
      */
     evaluateEntities(entityType, entities) {
         if (!entityType) {
-            throw new Error('entityType is missing');
+            throw new HashEngineError('entityType is missing');
         }
         if (!Array.isArray(entities)) {
-            throw new Error('entities must be an array');
+            throw new HashEngineError('entities must be an array');
         }
 
         const result = {

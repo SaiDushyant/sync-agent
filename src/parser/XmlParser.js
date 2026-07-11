@@ -1,4 +1,5 @@
 const { XMLParser } = require('fast-xml-parser');
+const ParserError = require('../errors/ParserError');
 
 class XmlParser {
     constructor() {
@@ -18,22 +19,22 @@ class XmlParser {
      */
     _parseAndValidate(xml) {
         if (typeof xml !== 'string') {
-            throw new Error('Invalid XML: input must be a string');
+            throw new ParserError('Invalid XML: input must be a string');
         }
         
         if (xml.trim() === '') {
-            throw new Error('Invalid XML: input is empty');
+            throw new ParserError('Invalid XML: input is empty');
         }
 
         let parsed;
         try {
             parsed = this.parser.parse(xml);
         } catch (e) {
-            throw new Error(`Invalid XML: ${e.message}`);
+            throw new ParserError(`Invalid XML: ${e.message}`, { cause: e });
         }
 
         if (!parsed || !parsed.ENVELOPE) {
-            throw new Error('Missing mandatory root nodes: ENVELOPE is required');
+            throw new ParserError('Missing mandatory root nodes: ENVELOPE is required');
         }
 
         const data = parsed.ENVELOPE?.BODY?.DATA;
@@ -121,7 +122,7 @@ class XmlParser {
         if (!result.name) missing.push('name');
 
         if (missing.length > 0) {
-            throw new Error(`Invalid XML: ${entityTag} missing mandatory field(s): ${missing.join(', ')}`);
+            throw new ParserError(`Invalid XML: ${entityTag} missing mandatory field(s): ${missing.join(', ')}`);
         }
 
         return result;

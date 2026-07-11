@@ -1,7 +1,9 @@
+const SyncError = require('../errors/SyncError');
+
 class Scheduler {
     constructor(syncEngine, config, logger) {
         if (!syncEngine || !config || !logger) {
-            throw new Error('Scheduler requires syncEngine, config, and logger');
+            throw new SyncError('Scheduler requires syncEngine, config, and logger');
         }
         this.syncEngine = syncEngine;
         this.logger = logger;
@@ -20,7 +22,7 @@ class Scheduler {
      */
     start() {
         if (this.isStarted) {
-            throw new Error('Scheduler is already started');
+            throw new SyncError('Scheduler is already started');
         }
         this.isStarted = true;
 

@@ -1,4 +1,5 @@
 const TallyRequests = require('../tally/TallyRequests');
+const SyncError = require('../errors/SyncError');
 
 const ENTITY_CONFIGS = Object.freeze({
     LEDGER: {
@@ -24,7 +25,7 @@ const ENTITY_ORDER = ['LEDGER', 'STOCK_GROUP', 'UNIT', 'STOCK_ITEM'];
 class SyncEngine {
     constructor({ tallyClient, parser, hashEngine, apiClient, database }) {
         if (!tallyClient || !parser || !hashEngine || !apiClient || !database) {
-            throw new Error('SyncEngine requires tallyClient, parser, hashEngine, apiClient, and database');
+            throw new SyncError('SyncEngine requires tallyClient, parser, hashEngine, apiClient, and database');
         }
         this.tallyClient = tallyClient;
         this.parser = parser;
@@ -82,7 +83,7 @@ class SyncEngine {
                     const apiResponse = await this.apiClient.uploadEntities(entityType, uploadPayload);
                     
                     if (!apiResponse || apiResponse.success !== true) {
-                        throw new Error('API upload failed or rejected the payload.');
+                        throw new SyncError('API upload failed or rejected the payload.');
                     }
 
                     // 7. Update hashes in DB inside a transaction upon confirmed success

@@ -1,4 +1,5 @@
 const http = require('http');
+const TallyError = require('../errors/TallyError');
 
 class TallyClient {
   constructor(config) {
@@ -23,7 +24,7 @@ class TallyClient {
 
       const req = http.request(options, (res) => {
         if (res.statusCode < 200 || res.statusCode >= 300) {
-          return reject(new Error(`TallyClient HTTP Error: Invalid status code ${res.statusCode} from ${this.host}:${this.port}`));
+          return reject(new TallyError(`TallyClient HTTP Error: Invalid status code ${res.statusCode} from ${this.host}:${this.port}`));
         }
 
         let data = '';
@@ -35,7 +36,7 @@ class TallyClient {
 
         res.on('end', () => {
           if (!data || data.trim() === '') {
-            return reject(new Error(`TallyClient Error: Empty response body received from ${this.host}:${this.port}`));
+            return reject(new TallyError(`TallyClient Error: Empty response body received from ${this.host}:${this.port}`));
           }
           resolve(data);
         });
@@ -43,7 +44,7 @@ class TallyClient {
 
       req.on('timeout', () => {
         req.destroy();
-        reject(new Error(`TallyClient Error: Request timed out for ${this.host}:${this.port}`));
+        reject(new TallyError(`TallyClient Error: Request timed out for ${this.host}:${this.port}`));
       });
 
       req.on('error', (err) => {
@@ -55,7 +56,7 @@ class TallyClient {
         } else {
           msg += err.message;
         }
-        reject(new Error(msg));
+        reject(new TallyError(msg, { cause: err }));
       });
 
       req.write(xmlData);

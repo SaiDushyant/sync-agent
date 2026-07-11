@@ -1,4 +1,5 @@
 const http = require('http');
+const ApiError = require('../errors/ApiError');
 const https = require('https');
 const { URL } = require('url');
 
@@ -18,7 +19,7 @@ class ApiClient {
    */
   constructor(config) {
     if (!config || !config.apiUrl || !config.apiKey) {
-      throw new Error('ApiClient requires a config with apiUrl and apiKey');
+      throw new ApiError('ApiClient requires a config with apiUrl and apiKey');
     }
     this.apiUrl = config.apiUrl;
     this.apiKey = config.apiKey;
@@ -56,7 +57,7 @@ class ApiClient {
       try {
         parsedUrl = new URL(this.apiUrl);
       } catch (e) {
-        return reject(new Error(`Invalid API URL: ${this.apiUrl}`));
+        return reject(new ApiError(`Invalid API URL: ${this.apiUrl}`));
       }
 
       const client = parsedUrl.protocol === 'https:' ? https : http;
@@ -86,28 +87,28 @@ class ApiClient {
           const status = res.statusCode;
 
           if (status >= 500 && status <= 599) {
-            const err = new Error(`HTTP Error: ${status} Internal Server Error`);
+            const err = new ApiError(`HTTP Error: ${status} Internal Server Error`);
             err.status = status;
             err.type = 'SERVER_ERROR';
             return reject(err);
           }
           
           if (status === 401 || status === 403) {
-            const err = new Error(`Authentication failure: HTTP ${status}`);
+            const err = new ApiError(`Authentication failure: HTTP ${status}`);
             err.status = status;
             err.type = 'AUTH_ERROR';
             return reject(err);
           }
 
           if (status === 400 || status === 404) {
-            const err = new Error(`HTTP Error: ${status} Client Error`);
+            const err = new ApiError(`HTTP Error: ${status} Client Error`);
             err.status = status;
             err.type = 'CLIENT_ERROR';
             return reject(err);
           }
 
           if (status < 200 || status >= 300) {
-            const err = new Error(`Invalid HTTP status: ${status}`);
+            const err = new ApiError(`Invalid HTTP status: ${status}`);
             err.status = status;
             err.type = 'INVALID_STATUS';
             return reject(err);
@@ -116,13 +117,13 @@ class ApiClient {
           try {
             const parsedData = JSON.parse(data);
             if (typeof parsedData !== 'object' || parsedData === null || Array.isArray(parsedData)) {
-              const err = new Error('Invalid JSON response: expected an object');
+              const err = new ApiError('Invalid JSON response: expected an object');
               err.type = 'INVALID_JSON';
               return reject(err);
             }
             resolve(parsedData);
           } catch (e) {
-            const err = new Error('Invalid JSON response');
+            const err = new ApiError('Invalid JSON response', { cause: e });
             err.type = 'INVALID_JSON';
             reject(err);
           }
@@ -130,14 +131,14 @@ class ApiClient {
       });
 
       req.on('error', (e) => {
-        const err = new Error(`Connection failure: ${e.message}`);
+        const err = new ApiError(`Connection failure: ${e.message}`, { cause: e });
         err.type = 'NETWORK_ERROR';
         reject(err);
       });
 
       req.on('timeout', () => {
         req.destroy();
-        const err = new Error('Request timeout');
+        const err = new ApiError('Request timeout');
         err.type = 'TIMEOUT';
         reject(err);
       });
