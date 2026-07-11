@@ -30,6 +30,11 @@ function loadConfig() {
   const DATABASE_PATH = trim(env.DATABASE_PATH);
   if (!DATABASE_PATH) throw new Error('Configuration Error: DATABASE_PATH is required.');
 
+  const REQUEST_TIMEOUT = parseInt(trim(env.REQUEST_TIMEOUT), 10);
+  if (isNaN(REQUEST_TIMEOUT) || REQUEST_TIMEOUT <= 0) {
+    throw new Error('Configuration Error: REQUEST_TIMEOUT must be a positive integer.');
+  }
+
   return Object.freeze({
     TALLY_HOST,
     TALLY_PORT,
@@ -37,7 +42,8 @@ function loadConfig() {
     API_KEY,
     SYNC_INTERVAL,
     LOG_LEVEL,
-    DATABASE_PATH
+    DATABASE_PATH,
+    requestTimeout: REQUEST_TIMEOUT
   });
 }
 
