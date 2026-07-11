@@ -45,7 +45,7 @@ function loadConfig() {
     TALLY_PORT,
     API_URL,
     API_KEY,
-    SYNC_INTERVAL,
+    syncInterval: SYNC_INTERVAL,
     LOG_LEVEL,
     DATABASE_PATH,
     requestTimeout: REQUEST_TIMEOUT,
