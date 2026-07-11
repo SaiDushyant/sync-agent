@@ -23,17 +23,17 @@ Its purpose is to extract data from Tally, parse the XML, track changes using ha
 - `logs/`: Log files
 - `data/`: Local database storage
 
-## Installation
+## Quick Start
 1. Clone the repository
 2. Run `npm install`
+3. Copy `.env.example` to `.env` and fill in your values
+4. Start the application: `npm start`
 
-## Environment Setup
-1. Copy `.env.example` to `.env`
-2. Fill in the required values in `.env`
+## Installation
+For detailed installation instructions, dependencies, and environment setup, please refer to the deployment guide below.
 
-## Running
-- To run normally: `npm start`
-- To run in development mode (with auto-restart): `npm run dev`
+## Deployment
+For production deployment instructions on Windows environments (including Task Scheduler setup, environment configuration, and logging), please see the full [Deployment Guide](file:///Users/saidushyant/code/Sync%20agent/docs/deployment-guide.md).
 
 ## Planned Project Phases
 - Phase 0: Project foundation and architecture (Current)
