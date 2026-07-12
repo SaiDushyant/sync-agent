@@ -3,8 +3,8 @@ const TallyError = require('../errors/TallyError');
 
 class TallyClient {
   constructor(config) {
-    this.host = config.TALLY_HOST;
-    this.port = config.TALLY_PORT;
+    this.host = config.tallyHost;
+    this.port = config.tallyPort;
     this.timeout = config.requestTimeout;
   }
 

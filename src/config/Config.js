@@ -42,17 +42,21 @@ function loadConfig() {
     throw new ConfigurationError('Configuration Error: API_REQUEST_TIMEOUT must be a positive integer.');
   }
 
-  return Object.freeze({
-    TALLY_HOST,
-    TALLY_PORT,
-    API_URL,
-    API_KEY,
+return Object.freeze({
+    tallyHost: TALLY_HOST,
+    tallyPort: TALLY_PORT,
+
+    apiUrl: API_URL,
+    apiKey: API_KEY,
+
     syncInterval: SYNC_INTERVAL,
     logLevel: LOG_LEVEL,
-    DATABASE_PATH,
+
+    databasePath: DATABASE_PATH,
+
     requestTimeout: REQUEST_TIMEOUT,
     apiRequestTimeout: API_REQUEST_TIMEOUT
-  });
+});
 }
 
 module.exports = { loadConfig };

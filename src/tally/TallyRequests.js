@@ -22,7 +22,34 @@ function buildLedgerRequest() {
 }
 
 function buildStockItemRequest() {
-  return buildGenericExportRequest('Stock Items');
+    return `
+<ENVELOPE>
+    <HEADER>
+        <VERSION>1</VERSION>
+        <TALLYREQUEST>Export</TALLYREQUEST>
+        <TYPE>Collection</TYPE>
+        <ID>Stock Item Collection</ID>
+    </HEADER>
+    <BODY>
+        <DESC>
+            <STATICVARIABLES>
+                <SVEXPORTFORMAT>$$SysName:XML</SVEXPORTFORMAT>
+            </STATICVARIABLES>
+            <TDL>
+                <TDLMESSAGE>
+                    <COLLECTION NAME="Stock Item Collection">
+                        <TYPE>Stock Item</TYPE>
+                        <FETCH>
+                            NAME
+                            PARENT
+                            BASEUNITS
+                        </FETCH>
+                    </COLLECTION>
+                </TDLMESSAGE>
+            </TDL>
+        </DESC>
+    </BODY>
+</ENVELOPE>`;
 }
 
 function buildStockGroupRequest() {
