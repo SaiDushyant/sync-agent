@@ -39,9 +39,9 @@ const ENTITY_CONFIGS = Object.freeze({
       category: entity.parent || null,
       costPrice: 0,
       stockQty: 0,
-      tallyStockQty: 0,
+      tallyStockQty: (entity.closingBalance && !isNaN(parseFloat(entity.closingBalance))) ? parseFloat(entity.closingBalance) : 0,
       stockGroupId: entity.parent || null,
-      unitId: null,
+      unitId: entity.baseUnits || null,
       isActive: true,
     }),
   },
@@ -114,6 +114,66 @@ class SyncEngine {
         }
         stats.total = entities.length;
 
+        if (entityType === "STOCK_ITEM") {
+          console.log("------------------------------------------------");
+          console.log("Received Stock Item XML");
+          console.log(`XML Length: ${Buffer.byteLength(xmlResponse, 'utf8')} bytes`);
+          console.log(`Stock Items Found: ${entities.length}`);
+          console.log("------------------------------------------------");
+
+          console.log(`Total parsed products: ${entities.length}`);
+          const limit = Math.min(entities.length, 3);
+          for (let i = 0; i < limit; i++) {
+            console.log(`Parsed Product #${i + 1}`);
+            console.log(JSON.stringify({
+              name: entities[i].name,
+              guid: entities[i].guid,
+              alterId: entities[i].alterId,
+              parent: entities[i].parent,
+              baseUnits: entities[i].baseUnits,
+              gstApplicable: entities[i].gstApplicable,
+              description: entities[i].description,
+              isBatchWiseOn: entities[i].isBatchWiseOn,
+              openingBalance: entities[i].openingBalance,
+              closingBalance: entities[i].closingBalance,
+              openingValue: entities[i].openingValue,
+              closingValue: entities[i].closingValue
+            }, null, 2));
+          }
+          console.log("");
+
+          console.log("=====================================");
+          console.log("Stock Item Sync");
+          console.log("=====================================");
+          console.log("\nReceived XML Successfully\n");
+          console.log("XML Length:");
+          console.log(`${Buffer.byteLength(xmlResponse, 'utf8')} bytes\n`);
+          console.log("Stock Items Found:");
+          console.log(`${entities.length}\n`);
+          console.log("Parsed Products:");
+          console.log(`${entities.length}\n`);
+          console.log("Sample Parsed Product:\n");
+          if (entities.length > 0) {
+            console.log(JSON.stringify({
+              name: entities[0].name,
+              guid: entities[0].guid,
+              alterId: entities[0].alterId,
+              parent: entities[0].parent,
+              baseUnits: entities[0].baseUnits,
+              gstApplicable: entities[0].gstApplicable,
+              description: entities[0].description,
+              isBatchWiseOn: entities[0].isBatchWiseOn,
+              openingBalance: entities[0].openingBalance,
+              closingBalance: entities[0].closingBalance,
+              openingValue: entities[0].openingValue,
+              closingValue: entities[0].closingValue
+            }, null, 2));
+          } else {
+            console.log("null");
+          }
+          console.log("");
+        }
+
         // 4. Evaluate entities using HashEngine
         const evaluated = this.hashEngine.evaluateEntities(
           entityType,
@@ -127,10 +187,32 @@ class SyncEngine {
         const entitiesToUpload = [...evaluated.new, ...evaluated.changed];
 
         // 6. Upload only if there are changes
+        const uploadPayload = entitiesToUpload.map((e) =>
+          config.mapPayload(e.entity),
+        );
+
+        if (entityType === "STOCK_ITEM") {
+          console.log(`Uploading ${uploadPayload.length} Products\n`);
+          if (uploadPayload.length > 0) {
+            console.log("Sample Payload:\n");
+            console.log(JSON.stringify(uploadPayload[0], null, 2));
+          } else {
+            console.log("Sample Payload:\nnull\n");
+          }
+          console.log("------------------------------------------------");
+
+          console.log("Products Ready for Upload:");
+          console.log(`${uploadPayload.length}\n`);
+          if (uploadPayload.length > 0) {
+            console.log("Sample Payload:\n");
+            console.log(JSON.stringify(uploadPayload[0], null, 2));
+          } else {
+            console.log("Sample Payload:\nnull\n");
+          }
+          console.log("");
+        }
+
         if (entitiesToUpload.length > 0) {
-          const uploadPayload = entitiesToUpload.map((e) =>
-            config.mapPayload(e.entity),
-          );
           console.log("Upload payload count:", uploadPayload.length);
 
           if (uploadPayload.length > 0) {
@@ -167,12 +249,35 @@ class SyncEngine {
         console.log(`Finished ${displayType}`);
         console.log(`Uploaded ${stats.uploaded}`);
         console.log(`Skipped ${stats.unchanged}`);
+
+        if (entityType === "STOCK_ITEM") {
+          console.log("Upload Successful\n");
+          console.log("Uploaded:");
+          console.log(`${stats.uploaded}\n`);
+          console.log("Skipped:");
+          console.log(`${stats.unchanged}\n`);
+          console.log("Failed:");
+          console.log("0\n");
+          console.log("=====================================");
+        }
       } catch (error) {
         // 9. Record failure and continue with other entities
         overallSuccess = false;
         stats.success = false;
         stats.error = error.message;
         entityResults[entityType] = stats;
+
+        if (entityType === "STOCK_ITEM") {
+          console.log("Upload Failed\n");
+          console.log("Uploaded:");
+          console.log("0\n");
+          console.log("Skipped:");
+          console.log(`${stats.unchanged}\n`);
+          console.log("Failed:");
+          console.log(`${stats.total - stats.unchanged}\n`);
+          console.log("=====================================");
+        }
+
         let displayType =
           entityType === "STOCK_ITEM"
             ? "Products"

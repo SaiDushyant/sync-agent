@@ -39,11 +39,18 @@ function buildStockItemRequest() {
                 <TDLMESSAGE>
                     <COLLECTION NAME="Stock Item Collection">
                         <TYPE>Stock Item</TYPE>
-                        <FETCH>
-                            NAME
-                            PARENT
-                            BASEUNITS
-                        </FETCH>
+                        <NATIVEMETHOD>NAME</NATIVEMETHOD>
+                        <NATIVEMETHOD>GUID</NATIVEMETHOD>
+                        <NATIVEMETHOD>ALTERID</NATIVEMETHOD>
+                        <NATIVEMETHOD>PARENT</NATIVEMETHOD>
+                        <NATIVEMETHOD>BASEUNITS</NATIVEMETHOD>
+                        <NATIVEMETHOD>GSTAPPLICABLE</NATIVEMETHOD>
+                        <NATIVEMETHOD>DESCRIPTION</NATIVEMETHOD>
+                        <NATIVEMETHOD>ISBATCHWISEON</NATIVEMETHOD>
+                        <NATIVEMETHOD>OPENINGBALANCE</NATIVEMETHOD>
+                        <NATIVEMETHOD>CLOSINGBALANCE</NATIVEMETHOD>
+                        <NATIVEMETHOD>OPENINGVALUE</NATIVEMETHOD>
+                        <NATIVEMETHOD>CLOSINGVALUE</NATIVEMETHOD>
                     </COLLECTION>
                 </TDLMESSAGE>
             </TDL>

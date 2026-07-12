@@ -83,6 +83,22 @@ class XmlParser {
         val = item.GUID || null;
       } else if (field === "alterId") {
         val = item.ALTERID || null;
+      } else if (field === "baseUnits") {
+        val = item.BASEUNITS || null;
+      } else if (field === "gstApplicable") {
+        val = item.GSTAPPLICABLE || null;
+      } else if (field === "description") {
+        val = item.DESCRIPTION || null;
+      } else if (field === "isBatchWiseOn") {
+        val = item.ISBATCHWISEON || null;
+      } else if (field === "openingBalance") {
+        val = item.OPENINGBALANCE || null;
+      } else if (field === "closingBalance") {
+        val = item.CLOSINGBALANCE || null;
+      } else if (field === "openingValue") {
+        val = item.OPENINGVALUE || null;
+      } else if (field === "closingValue") {
+        val = item.CLOSINGVALUE || null;
       }
 
       // Handle cases where empty tags are parsed as empty objects or objects with attributes
@@ -165,7 +181,25 @@ class XmlParser {
     }
 
     return items.map((item) =>
-      this._mapEntity(item, ["id", "name", "parent"], "STOCKITEM"),
+      this._mapEntity(
+        item,
+        [
+          "id",
+          "name",
+          "parent",
+          "guid",
+          "alterId",
+          "baseUnits",
+          "gstApplicable",
+          "description",
+          "isBatchWiseOn",
+          "openingBalance",
+          "closingBalance",
+          "openingValue",
+          "closingValue"
+        ],
+        "STOCKITEM",
+      ),
     );
   }
 
@@ -178,7 +212,7 @@ class XmlParser {
     const parsed = this._parseXml(xml);
 
     let messages =
-      parsed?.ENVELOPE?.BODY?.IMPORTDATA?.REQUESTDATA?.TALLYMESSAGE;
+      parsed?.ENVELOPE?.BODY?.DATA?.COLLECTION?.STOCKGROUP;
 
     if (!messages) {
       return [];
@@ -222,7 +256,7 @@ class XmlParser {
     const parsed = this._parseXml(xml);
 
     let messages =
-      parsed?.ENVELOPE?.BODY?.IMPORTDATA?.REQUESTDATA?.TALLYMESSAGE;
+      parsed?.ENVELOPE?.BODY?.DATA?.COLLECTION?.UNIT;
 
     if (!messages) {
       return [];
