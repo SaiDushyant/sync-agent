@@ -105,9 +105,9 @@ class MockTallyClient {
   }
   async sendRequest(xmlRequest) {
     this.requests.push(xmlRequest);
-    if (xmlRequest.includes("Stock Groups")) {
+    if (xmlRequest.includes("Stock Group Collection") || xmlRequest.includes("Stock Groups")) {
       return MOCK_STOCK_GROUP_XML;
-    } else if (xmlRequest.includes("Units")) {
+    } else if (xmlRequest.includes("Unit Collection") || xmlRequest.includes("Units")) {
       return MOCK_UNIT_XML;
     } else if (xmlRequest.includes("Stock Item Collection")) {
       return MOCK_STOCK_ITEM_XML;
@@ -304,8 +304,8 @@ async function runTests() {
   // Custom tally client to return the changed stock items
   const mockTallyAltered = {
     async sendRequest(xmlRequest) {
-      if (xmlRequest.includes("Stock Groups")) return MOCK_STOCK_GROUP_XML;
-      if (xmlRequest.includes("Units")) return MOCK_UNIT_XML;
+      if (xmlRequest.includes("Stock Group Collection") || xmlRequest.includes("Stock Groups")) return MOCK_STOCK_GROUP_XML;
+      if (xmlRequest.includes("Unit Collection") || xmlRequest.includes("Units")) return MOCK_UNIT_XML;
       if (xmlRequest.includes("Stock Item Collection")) return alteredStockItemXml;
       throw new Error("Unknown");
     }

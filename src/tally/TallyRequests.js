@@ -60,11 +60,77 @@ function buildStockItemRequest() {
 }
 
 function buildStockGroupRequest() {
-  return buildGenericExportRequest('Stock Groups');
+  return `
+<ENVELOPE>
+    <HEADER>
+        <VERSION>1</VERSION>
+        <TALLYREQUEST>Export</TALLYREQUEST>
+        <TYPE>Collection</TYPE>
+        <ID>Stock Group Collection</ID>
+    </HEADER>
+
+    <BODY>
+        <DESC>
+            <STATICVARIABLES>
+                <SVEXPORTFORMAT>$$SysName:XML</SVEXPORTFORMAT>
+            </STATICVARIABLES>
+
+            <TDL>
+                <TDLMESSAGE>
+
+                    <COLLECTION NAME="Stock Group Collection">
+                        <TYPE>Stock Group</TYPE>
+
+                        <NATIVEMETHOD>NAME</NATIVEMETHOD>
+                        <NATIVEMETHOD>GUID</NATIVEMETHOD>
+                        <NATIVEMETHOD>ALTERID</NATIVEMETHOD>
+                        <NATIVEMETHOD>PARENT</NATIVEMETHOD>
+
+                    </COLLECTION>
+
+                </TDLMESSAGE>
+            </TDL>
+
+        </DESC>
+    </BODY>
+</ENVELOPE>`;
 }
 
 function buildUnitRequest() {
-  return buildGenericExportRequest('Units');
+  return `
+<ENVELOPE>
+    <HEADER>
+        <VERSION>1</VERSION>
+        <TALLYREQUEST>Export</TALLYREQUEST>
+        <TYPE>Collection</TYPE>
+        <ID>Unit Collection</ID>
+    </HEADER>
+
+    <BODY>
+        <DESC>
+            <STATICVARIABLES>
+                <SVEXPORTFORMAT>$$SysName:XML</SVEXPORTFORMAT>
+            </STATICVARIABLES>
+
+            <TDL>
+                <TDLMESSAGE>
+
+                    <COLLECTION NAME="Unit Collection">
+                        <TYPE>Unit</TYPE>
+
+                        <NATIVEMETHOD>NAME</NATIVEMETHOD>
+                        <NATIVEMETHOD>GUID</NATIVEMETHOD>
+                        <NATIVEMETHOD>ALTERID</NATIVEMETHOD>
+                        <NATIVEMETHOD>SYMBOL</NATIVEMETHOD>
+
+                    </COLLECTION>
+
+                </TDLMESSAGE>
+            </TDL>
+
+        </DESC>
+    </BODY>
+</ENVELOPE>`;
 }
 
 module.exports = {

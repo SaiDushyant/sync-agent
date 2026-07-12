@@ -22,7 +22,7 @@ const ENTITY_CONFIGS = Object.freeze({
       tallyGuid: entity.guid || null,
       tallyAlterId: entity.alterId ? parseInt(entity.alterId, 10) : null,
       name: entity.name || null,
-      symbol: entity.name || null,
+      symbol: entity.symbol || entity.name || null,
       isActive: true,
     }),
   },
@@ -98,6 +98,13 @@ class SyncEngine {
         console.log("Building XML...");
         const xmlRequest = config.buildRequest();
 
+        if (entityType === "STOCK_GROUP" || entityType === "UNIT") {
+          console.log("=====================================");
+          console.log(`Generated XML Request for ${displayType}:`);
+          console.log(xmlRequest);
+          console.log("=====================================");
+        }
+
         console.log("Sending request to Tally...");
         const xmlResponse = await this.tallyClient.sendRequest(xmlRequest);
 
@@ -114,7 +121,21 @@ class SyncEngine {
         }
         stats.total = entities.length;
 
-        if (entityType === "STOCK_ITEM") {
+        if (entityType === "STOCK_GROUP") {
+          console.log(`Total parsed Stock Groups: ${entities.length}`);
+          const limit = Math.min(entities.length, 3);
+          for (let i = 0; i < limit; i++) {
+            console.log(`Parsed Stock Group #${i + 1}:`);
+            console.log(JSON.stringify(entities[i], null, 2));
+          }
+        } else if (entityType === "UNIT") {
+          console.log(`Total parsed Units: ${entities.length}`);
+          const limit = Math.min(entities.length, 3);
+          for (let i = 0; i < limit; i++) {
+            console.log(`Parsed Unit #${i + 1}:`);
+            console.log(JSON.stringify(entities[i], null, 2));
+          }
+        } else if (entityType === "STOCK_ITEM") {
           console.log("------------------------------------------------");
           console.log("Received Stock Item XML");
           console.log(`XML Length: ${Buffer.byteLength(xmlResponse, 'utf8')} bytes`);
@@ -191,7 +212,17 @@ class SyncEngine {
           config.mapPayload(e.entity),
         );
 
-        if (entityType === "STOCK_ITEM") {
+        if (entityType === "STOCK_GROUP") {
+          console.log(`Uploading ${uploadPayload.length} Stock Groups`);
+          if (uploadPayload.length > 0) {
+            console.log("Sample Stock Group Payload:\n", JSON.stringify(uploadPayload[0], null, 2));
+          }
+        } else if (entityType === "UNIT") {
+          console.log(`Uploading ${uploadPayload.length} Units`);
+          if (uploadPayload.length > 0) {
+            console.log("Sample Unit Payload:\n", JSON.stringify(uploadPayload[0], null, 2));
+          }
+        } else if (entityType === "STOCK_ITEM") {
           console.log(`Uploading ${uploadPayload.length} Products\n`);
           if (uploadPayload.length > 0) {
             console.log("Sample Payload:\n");

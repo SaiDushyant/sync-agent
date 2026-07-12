@@ -99,6 +99,8 @@ class XmlParser {
         val = item.OPENINGVALUE || null;
       } else if (field === "closingValue") {
         val = item.CLOSINGVALUE || null;
+      } else if (field === "symbol") {
+        val = item.SYMBOL || null;
       }
 
       // Handle cases where empty tags are parsed as empty objects or objects with attributes
@@ -211,40 +213,41 @@ class XmlParser {
   parseStockGroups(xml) {
     const parsed = this._parseXml(xml);
 
-    let messages =
-      parsed?.ENVELOPE?.BODY?.DATA?.COLLECTION?.STOCKGROUP;
+    let items = parsed?.ENVELOPE?.BODY?.DATA?.COLLECTION?.STOCKGROUP;
 
-    if (!messages) {
+    if (!items) {
+      // Check for TALLYMESSAGE structure
+      const messages = parsed?.ENVELOPE?.BODY?.IMPORTDATA?.REQUESTDATA?.TALLYMESSAGE;
+      if (messages) {
+        const msgArray = Array.isArray(messages) ? messages : [messages];
+        items = [];
+        for (const msg of msgArray) {
+          if (msg.STOCKGROUP) {
+            if (Array.isArray(msg.STOCKGROUP)) {
+              items.push(...msg.STOCKGROUP);
+            } else {
+              items.push(msg.STOCKGROUP);
+            }
+          }
+        }
+      }
+    }
+
+    if (!items) {
       return [];
     }
 
-    if (!Array.isArray(messages)) {
-      messages = [messages];
+    if (!Array.isArray(items)) {
+      items = [items];
     }
 
-    const groups = [];
-
-    for (const msg of messages) {
-      let items = msg.STOCKGROUP;
-
-      if (!items) continue;
-
-      if (!Array.isArray(items)) {
-        items = [items];
-      }
-
-      for (const item of items) {
-        groups.push(
-          this._mapEntity(
-            item,
-            ["id", "name", "parent", "guid", "alterId"],
-            "STOCKGROUP",
-          ),
-        );
-      }
-    }
-
-    return groups;
+    return items.map((item) =>
+      this._mapEntity(
+        item,
+        ["id", "name", "parent", "guid", "alterId"],
+        "STOCKGROUP",
+      ),
+    );
   }
 
   /**
@@ -255,36 +258,37 @@ class XmlParser {
   parseUnits(xml) {
     const parsed = this._parseXml(xml);
 
-    let messages =
-      parsed?.ENVELOPE?.BODY?.DATA?.COLLECTION?.UNIT;
+    let items = parsed?.ENVELOPE?.BODY?.DATA?.COLLECTION?.UNIT;
 
-    if (!messages) {
+    if (!items) {
+      // Check for TALLYMESSAGE structure
+      const messages = parsed?.ENVELOPE?.BODY?.IMPORTDATA?.REQUESTDATA?.TALLYMESSAGE;
+      if (messages) {
+        const msgArray = Array.isArray(messages) ? messages : [messages];
+        items = [];
+        for (const msg of msgArray) {
+          if (msg.UNIT) {
+            if (Array.isArray(msg.UNIT)) {
+              items.push(...msg.UNIT);
+            } else {
+              items.push(msg.UNIT);
+            }
+          }
+        }
+      }
+    }
+
+    if (!items) {
       return [];
     }
 
-    if (!Array.isArray(messages)) {
-      messages = [messages];
+    if (!Array.isArray(items)) {
+      items = [items];
     }
 
-    const units = [];
-
-    for (const msg of messages) {
-      let items = msg.UNIT;
-
-      if (!items) continue;
-
-      if (!Array.isArray(items)) {
-        items = [items];
-      }
-
-      for (const item of items) {
-        units.push(
-          this._mapEntity(item, ["id", "name", "guid", "alterId"], "UNIT"),
-        );
-      }
-    }
-
-    return units;
+    return items.map((item) =>
+      this._mapEntity(item, ["id", "name", "guid", "alterId", "symbol"], "UNIT"),
+    );
   }
 }
 
